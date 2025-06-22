@@ -49,6 +49,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>()
     const isProd = process.env.NODE_ENV === 'production'
 
+    // Get request ID if available / Obtener ID de request si está disponible
+    const requestId = (request as unknown as { requestId?: string }).requestId || 'unknown'
+
     const finalException = this.processException(exception, isProd)
     const status = finalException.getStatus()
     const exceptionResponse = finalException.getResponse()
@@ -59,9 +62,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exceptionResponse
         : (exceptionResponse as Record<string, unknown>).message || exceptionResponse
 
-    // Log error
+    // Log error with request ID / Registrar error con ID de request
     this.logger.error(
-      `[${request.method}] ${request.url} | Status: ${status}`,
+      `[${requestId}] ${request.method} ${request.url} | Status: ${status}`,
       finalException.stack || String(exception),
     )
 
@@ -70,6 +73,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       error: errorMessage,
+      requestId,
     })
   }
 
