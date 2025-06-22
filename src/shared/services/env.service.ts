@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import {
-  EnvironmentVariables,
-  isProduction,
-  isDevelopment,
-  getKafkaBrokers,
-} from '../../config/env.validation'
+import { EnvironmentVariables, isProduction, isDevelopment, getKafkaBrokers } from '../../config/env.validation'
+import { readFileSync } from 'fs'
 
 /**
  * Global environment variables service
@@ -16,17 +12,13 @@ import {
  */
 @Injectable()
 export class EnvService {
-  constructor(
-    private readonly configService: ConfigService<EnvironmentVariables>,
-  ) {}
+  constructor(private readonly configService: ConfigService<EnvironmentVariables>) {}
 
   /**
    * Get environment variable with type safety
    * Obtener variable de entorno con seguridad de tipos
    */
-  get<K extends keyof EnvironmentVariables>(
-    key: K,
-  ): EnvironmentVariables[K] | undefined {
+  get<K extends keyof EnvironmentVariables>(key: K): EnvironmentVariables[K] | undefined {
     return this.configService.get<EnvironmentVariables[K]>(key)
   }
 
@@ -45,9 +37,7 @@ export class EnvService {
    * Get environment variable or throw if not found
    * Obtener variable de entorno o lanzar error si no existe
    */
-  getOrThrow<K extends keyof EnvironmentVariables>(
-    key: K,
-  ): EnvironmentVariables[K] {
+  getOrThrow<K extends keyof EnvironmentVariables>(key: K): EnvironmentVariables[K] {
     return this.configService.getOrThrow<EnvironmentVariables[K]>(key)
   }
 
@@ -149,9 +139,23 @@ export class EnvService {
   }
 
   get databaseSsl(): boolean {
-    return this.getWithDefault(
-      'DATABASE_SSL_DISABLE_REJECT_UNAUTHORIZED',
-      false,
-    )
+    return this.getWithDefault('DATABASE_SSL_DISABLE_REJECT_UNAUTHORIZED', false)
+  }
+
+  // JWT
+  get certPrivateKey(): string {
+    return readFileSync(this.getWithDefault('JWT_PRIVATE_KEY_PATH', ''), 'utf8')
+  }
+
+  get certPublicKey(): string {
+    return readFileSync(this.getWithDefault('JWT_PUBLIC_KEY_PATH', ''), 'utf8')
+  }
+
+  get jwtIssuer(): string {
+    return this.getWithDefault('JWT_ISSUER', 'nestjs-app')
+  }
+
+  get jwtAudience(): string {
+    return this.getWithDefault('JWT_AUDIENCE', 'nestjs-app-users')
   }
 }
