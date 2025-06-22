@@ -61,8 +61,7 @@ function IsPemCertificate(validationOptions?: ValidationOptions) {
           }
 
           // Validate PEM format
-          const pemRegex =
-            /-----BEGIN [A-Z\s]+-----[\s\S]*-----END [A-Z\s]+-----/
+          const pemRegex = /-----BEGIN [A-Z\s]+-----[\s\S]*-----END [A-Z\s]+-----/
           return pemRegex.test(content)
         },
         defaultMessage() {
@@ -152,9 +151,7 @@ export class EnvironmentVariables {
  * Main environment variables validation function
  * Used in ConfigModule.forRoot({ validate })
  */
-export function validate(
-  config: Record<string, unknown>,
-): EnvironmentVariables {
+export function validate(config: Record<string, unknown>): EnvironmentVariables {
   const validatedConfig = plainToClass(EnvironmentVariables, config, {
     enableImplicitConversion: true,
   })
@@ -193,23 +190,17 @@ export function validateProductionEnv(config: EnvironmentVariables) {
 
   for (const field of requiredInProduction) {
     if (!config[field as keyof EnvironmentVariables]) {
-      throw new Error(
-        `❌ Environment variable required in production: ${field}`,
-      )
+      throw new Error(`❌ Environment variable required in production: ${field}`)
     }
   }
 
   // Validate that JWT certificates exist
   if (!existsSync(resolve(config.JWT_PRIVATE_KEY_PATH))) {
-    throw new Error(
-      `❌ JWT private key file not found: ${config.JWT_PRIVATE_KEY_PATH}`,
-    )
+    throw new Error(`❌ JWT private key file not found: ${config.JWT_PRIVATE_KEY_PATH}`)
   }
 
   if (!existsSync(resolve(config.JWT_PUBLIC_KEY_PATH))) {
-    throw new Error(
-      `❌ JWT public key file not found: ${config.JWT_PUBLIC_KEY_PATH}`,
-    )
+    throw new Error(`❌ JWT public key file not found: ${config.JWT_PUBLIC_KEY_PATH}`)
   }
 
   // Validate KAFKA_BROKERS JSON format (if present)
@@ -217,9 +208,7 @@ export function validateProductionEnv(config: EnvironmentVariables) {
     try {
       JSON.parse(config.KAFKA_BROKERS)
     } catch {
-      throw new Error(
-        '❌ KAFKA_BROKERS must be a valid JSON with array of brokers',
-      )
+      throw new Error('❌ KAFKA_BROKERS must be a valid JSON with array of brokers')
     }
   }
 }
@@ -255,10 +244,7 @@ export function getKafkaBrokers(config: EnvironmentVariables): string[] {
 
   try {
     const parsed = JSON.parse(config.KAFKA_BROKERS) as string[]
-    if (
-      !Array.isArray(parsed) ||
-      !parsed.every((item) => typeof item === 'string')
-    ) {
+    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
       throw new Error('KAFKA_BROKERS must be an array of strings')
     }
     return parsed
