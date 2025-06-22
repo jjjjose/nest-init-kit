@@ -51,7 +51,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const finalException = this.processException(exception, isProd)
     const status = finalException.getStatus()
-    const message = finalException.getResponse()
+    const exceptionResponse = finalException.getResponse()
+
+    // Extract error message, avoiding duplication / Extraer mensaje de error, evitando duplicación
+    const errorMessage =
+      typeof exceptionResponse === 'string'
+        ? exceptionResponse
+        : (exceptionResponse as Record<string, unknown>).message || exceptionResponse
 
     // Log error
     this.logger.error(
@@ -63,7 +69,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      error: message,
+      error: errorMessage,
     })
   }
 
