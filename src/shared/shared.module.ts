@@ -1,6 +1,9 @@
 import { Global, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { EnvService } from './services/env.service'
+import { RequestLogService } from './services/request-log.service'
+import { CsvLoggerService } from './services/csv-logger.service'
+import { RequestMonitoringController } from './controllers/request-monitoring.controller'
 
 /**
  * Global shared module
@@ -12,7 +15,8 @@ import { EnvService } from './services/env.service'
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [EnvService],
-  exports: [EnvService],
+  providers: [EnvService, CsvLoggerService, RequestLogService],
+  controllers: [RequestMonitoringController],
+  exports: [EnvService, RequestLogService, CsvLoggerService],
 })
 export class SharedModule {}
