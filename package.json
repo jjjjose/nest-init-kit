@@ -14,10 +14,15 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:unit": "jest --config ./test/jest-unit.json",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "test:cov:unit": "jest --config ./test/jest-unit.json --coverage",
+    "test:cov:all": "jest --coverage && jest --config ./test/jest-unit.json --coverage --coverageDirectory=./test/unit/coverage-unit",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:auth": "jest --config ./test/jest-unit.json test/unit/services/auth.service.spec.ts test/unit/controllers/auth.controller.spec.ts",
+    "test:auth:e2e": "jest --config ./test/jest-e2e.json test/e2e/auth.e2e-spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
