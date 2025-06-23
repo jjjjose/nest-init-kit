@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { EnvironmentVariables, isProduction, isDevelopment, getKafkaBrokers } from '../../config/env.validation'
 import { readFileSync } from 'fs'
 
@@ -12,7 +12,15 @@ import { readFileSync } from 'fs'
  */
 @Injectable()
 export class EnvService {
-  constructor(private readonly configService: ConfigService<EnvironmentVariables>) {}
+  private readonly configService: ConfigService<EnvironmentVariables>
+  constructor(private readonly cfg?: ConfigService<EnvironmentVariables>) {
+    if (!cfg)
+      void ConfigModule.forRoot({
+        isGlobal: true,
+      })
+
+    this.configService = cfg instanceof ConfigService ? cfg : new ConfigService()
+  }
 
   /**
    * Get environment variable with type safety

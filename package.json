@@ -22,7 +22,16 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:auth": "jest --config ./test/jest-unit.json test/unit/services/auth.service.spec.ts test/unit/controllers/auth.controller.spec.ts",
-    "test:auth:e2e": "jest --config ./test/jest-e2e.json test/e2e/auth.e2e-spec.ts"
+    "test:auth:e2e": "jest --config ./test/jest-e2e.json test/e2e/auth.e2e-spec.ts",
+    "migration:generate": "ts-node src/database/scripts/generate-migration.ts",
+    "migration:create": "ts-node src/database/scripts/create-migration.ts",
+    "migration:run": "pnpm typeorm-ts-node-commonjs migration:run -d ormconfig.ts",
+    "migration:revert": "pnpm typeorm-ts-node-commonjs migration:revert -d ormconfig.ts",
+    "migration:show": "pnpm typeorm-ts-node-commonjs migration:show -d ormconfig.ts",
+    "schema:drop": "pnpm typeorm-ts-node-commonjs schema:drop -d ormconfig.ts",
+    "schema:sync": "pnpm typeorm-ts-node-commonjs schema:sync -d ormconfig.ts",
+    "seed:run": "ts-node src/database/seeders/run-seeders.ts run",
+    "seed:drop": "ts-node src/database/seeders/run-seeders.ts drop"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
