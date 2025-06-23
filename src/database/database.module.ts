@@ -1,20 +1,18 @@
-import { Module, Scope } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { Global, Module, Scope } from '@nestjs/common'
 import { DatabaseService } from './database.service'
 import { DATA_SOURCE_DEFAULT, DEFAULT_CONNECTION_ALIAS } from 'src/shared'
 
+@Global()
 @Module({
-  imports: [ConfigModule],
   providers: [
     DatabaseService,
     {
       provide: DATA_SOURCE_DEFAULT,
       inject: [DatabaseService],
       scope: Scope.REQUEST,
-      useFactory: (dbService: DatabaseService) =>
-        dbService.getDataSource(DEFAULT_CONNECTION_ALIAS),
+      useFactory: (dbService: DatabaseService) => dbService.getDataSource(DEFAULT_CONNECTION_ALIAS),
     },
   ],
-  exports: [DatabaseService],
+  exports: [DATA_SOURCE_DEFAULT],
 })
 export class DatabaseModule {}
