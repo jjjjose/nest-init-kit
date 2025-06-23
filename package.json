@@ -31,7 +31,16 @@
     "schema:drop": "pnpm typeorm-ts-node-commonjs schema:drop -d ormconfig.ts",
     "schema:sync": "pnpm typeorm-ts-node-commonjs schema:sync -d ormconfig.ts",
     "seed:run": "ts-node src/database/seeders/run-seeders.ts run",
-    "seed:drop": "ts-node src/database/seeders/run-seeders.ts drop"
+    "seed:drop": "ts-node src/database/seeders/run-seeders.ts drop",
+    "mg:gen": "ts-node src/database/scripts/generate-migration.ts",
+    "mg:create": "ts-node src/database/scripts/create-migration.ts",
+    "mg:run": "pnpm typeorm-ts-node-commonjs migration:run -d ormconfig.ts",
+    "mg:revert": "pnpm typeorm-ts-node-commonjs migration:revert -d ormconfig.ts",
+    "mg:show": "pnpm typeorm-ts-node-commonjs migration:show -d ormconfig.ts",
+    "sch:drop": "pnpm typeorm-ts-node-commonjs schema:drop -d ormconfig.ts",
+    "sch:sync": "pnpm typeorm-ts-node-commonjs schema:sync -d ormconfig.ts",
+    "s:run": "ts-node src/database/seeders/run-seeders.ts run",
+    "s:drop": "ts-node src/database/seeders/run-seeders.ts drop"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
