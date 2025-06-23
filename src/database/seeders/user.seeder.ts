@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm'
+import { Logger } from '@nestjs/common'
 import * as bcrypt from 'bcryptjs'
 import { UserEntity } from '../entities/user.entity'
 import { Role } from '../../shared/enums/role.enum'
@@ -8,6 +9,8 @@ import { Role } from '../../shared/enums/role.enum'
  * Creates initial system users / Crea usuarios iniciales del sistema
  */
 export class UserSeeder {
+  private readonly logger = new Logger(UserSeeder.name)
+
   constructor(private dataSource: DataSource) {}
 
   /**
@@ -19,11 +22,11 @@ export class UserSeeder {
     // Verificar si ya existen usuarios
     const existingUsersCount = await userRepository.count()
     if (existingUsersCount > 0) {
-      console.log('👥 Users already exist, skipping seeder')
+      this.logger.log('👥 Users already exist, skipping seeder')
       return
     }
 
-    console.log('👥 Creating initial users...')
+    this.logger.log('👥 Creating initial users...')
 
     // Contraseña por defecto hasheada
     const defaultPassword = await bcrypt.hash('password123', 10)
@@ -70,20 +73,19 @@ export class UserSeeder {
     // Guardar usuarios
     await userRepository.save([superAdmin, admin, user, inactiveUser])
 
-    console.log('✅ Users created successfully:')
-    console.log('  - superadmin@example.com (Super Admin)')
-    console.log('  - admin@example.com (Admin)')
-    console.log('  - user@example.com (User)')
-    console.log('  - inactive@example.com (Inactive User)')
-    console.log('  Password for all: password123')
+    this.logger.log('✅ Users created successfully:')
+    this.logger.log('  - superadmin@example.com (Super Admin)')
+    this.logger.log('  - admin@example.com (Admin)')
+    this.logger.log('  - user@example.com (User)')
+    this.logger.log('  - inactive@example.com (Inactive User)')
+    this.logger.log('  Password for all: password123')
   }
 
   /**
    * Clean data / Limpiar datos
    */
   async drop(): Promise<void> {
-    const userRepository = this.dataSource.getRepository(UserEntity)
-    await userRepository.clear()
-    console.log('🗑️  Users deleted')
+    await this.dataSource.query('TRUNCATE TABLE users RESTART IDENTITY CASCADE')
+    this.logger.log('🗑️  Users table truncated and ID sequence reset')
   }
 }

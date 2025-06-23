@@ -1,39 +1,32 @@
-import { NestFactory } from '@nestjs/core'
-import { DataSource } from 'typeorm'
-import { AppModule } from '../../app.module'
+import { Logger } from '@nestjs/common'
 import { UserSeeder } from './user.seeder'
+import { SeederDataSource } from './seeder-datasource'
+
+const logger = new Logger('RunSeeders')
 
 /**
  * Script to run seeders / Script para ejecutar seeders
  */
 async function runSeeders() {
-  console.log('🌱 Starting seeders...')
+  logger.log('🌱 Starting seeders...')
 
   try {
-    // Crear aplicación NestJS
-    const app = await NestFactory.createApplicationContext(AppModule)
+    // Obtener DataSource inicializado
+    const dataSource = await SeederDataSource.getInstance()
 
-    // Obtener DataSource
-    const dataSource = app.get(DataSource)
-
-    // Verificar conexión
-    if (!dataSource.isInitialized) {
-      await dataSource.initialize()
-    }
-
-    console.log('📊 Database connection established')
+    logger.log('📊 Database connection established')
 
     // Ejecutar seeders
     const userSeeder = new UserSeeder(dataSource)
     await userSeeder.run()
 
-    console.log('✅ All seeders executed successfully')
+    logger.log('✅ All seeders executed successfully')
 
-    // Cerrar aplicación
-    await app.close()
+    // Cerrar conexión
+    await SeederDataSource.close()
     process.exit(0)
   } catch (error) {
-    console.error('❌ Error executing seeders:', error)
+    logger.error('❌ Error executing seeders:', error)
     process.exit(1)
   }
 }
@@ -42,26 +35,23 @@ async function runSeeders() {
  * Script to clean data / Script para limpiar datos
  */
 async function dropData() {
-  console.log('🗑️  Starting data cleanup...')
+  logger.log('🗑️  Starting data cleanup...')
 
   try {
-    const app = await NestFactory.createApplicationContext(AppModule)
-    const dataSource = app.get(DataSource)
-
-    if (!dataSource.isInitialized) {
-      await dataSource.initialize()
-    }
+    // Obtener DataSource inicializado
+    const dataSource = await SeederDataSource.getInstance()
 
     // Limpiar datos
     const userSeeder = new UserSeeder(dataSource)
     await userSeeder.drop()
 
-    console.log('✅ Data cleaned successfully')
+    logger.log('✅ Data cleaned successfully')
 
-    await app.close()
+    // Cerrar conexión
+    await SeederDataSource.close()
     process.exit(0)
   } catch (error) {
-    console.error('❌ Error cleaning data:', error)
+    logger.error('❌ Error cleaning data:', error)
     process.exit(1)
   }
 }
@@ -77,8 +67,8 @@ switch (command) {
     void dropData()
     break
   default:
-    console.log('Usage: npm run seed [run|drop]')
-    console.log('  run  - Execute seeders')
-    console.log('  drop - Clean data')
+    logger.log('Usage: npm run seed [run|drop]')
+    logger.log('  run  - Execute seeders')
+    logger.log('  drop - Clean data')
     process.exit(1)
 }
