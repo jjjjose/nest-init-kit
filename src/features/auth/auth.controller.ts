@@ -1,8 +1,7 @@
-import { Controller, Post, Get, Body, UseGuards, HttpStatus, HttpCode, Req } from '@nestjs/common'
+import { Controller, Post, Get, Body, HttpStatus, HttpCode, Req } from '@nestjs/common'
 import { AuthService, LoginResponse } from './auth.service'
-import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { LoginDto } from './dto/login.dto'
-import { Public } from '../../shared/decorators/public.decorator'
+import { Public } from '../../shared/decorators'
 import { Request } from 'express'
 
 /**
@@ -37,7 +36,6 @@ export class AuthController {
    * @param req - Request object with user data / Objeto de petición con datos del usuario
    * @returns Current user profile / Perfil del usuario actual
    */
-  @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req: Request) {
     return {
@@ -52,7 +50,6 @@ export class AuthController {
    *
    * @returns Success message / Mensaje de éxito
    */
-  @UseGuards(JwtAuthGuard)
   @Get('test')
   testAuth(@Req() req: Request) {
     return {

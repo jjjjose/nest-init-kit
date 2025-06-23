@@ -12,3 +12,6 @@ export * from './roles.decorator'
 
 // DataSource injection decorator / Decorador de inyección de DataSource
 export * from './inject-datasource.decorator'
+
+// Auth decorator / Decorador de autenticación
+export * from './auth.decorator'
