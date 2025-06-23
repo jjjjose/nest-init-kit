@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './features/auth/guards/jwt-auth.guard'
 import { MyJwtModule } from './shared/jwt/my-jwt.module'
 import { RequestLoggingInterceptor } from './shared/interceptors/request-logging.interceptor'
 import { RequestLoggingMiddleware } from './shared/middleware/request-logging.middleware'
+import { RepositoriesModule } from './database/repositories.module'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RequestLoggingMiddleware } from './shared/middleware/request-logging.mi
       validate,
     }),
     DatabaseModule,
+    RepositoriesModule,
     SharedModule,
     AuthModule,
     MyJwtModule,
