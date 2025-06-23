@@ -2,8 +2,10 @@
 
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { Logger } from '@nestjs/common'
 
 const execAsync = promisify(exec)
+const logger = new Logger('GenerateMigrationScript')
 
 /**
  * Generate migration script / Script para generar migraciones
@@ -14,27 +16,27 @@ async function generateMigration() {
   const migrationName = process.argv[2]
 
   if (!migrationName) {
-    console.error('❌ Migration name is required')
-    console.error('Usage: npm run migration:generate -- CreateUserTable')
-    console.error('Uso: npm run migration:generate -- CreateUserTable')
+    logger.error('❌ Migration name is required')
+    logger.error('Usage: npm run migration:generate -- CreateUserTable')
+    logger.error('Uso: npm run migration:generate -- CreateUserTable')
     process.exit(1)
   }
 
   try {
-    console.log(`🔄 Generating migration: ${migrationName}`)
+    logger.log(`🔄 Generating migration: ${migrationName}`)
 
     const { stdout, stderr } = await execAsync(
       `pnpm typeorm-ts-node-commonjs -d ormconfig.ts migration:generate src/database/migrations/${migrationName}`,
     )
 
     if (stderr) {
-      console.error('⚠️  Warning:', stderr)
+      logger.warn('⚠️  Warning:', stderr)
     }
 
-    console.log(stdout)
-    console.log(`✅ Migration ${migrationName} generated successfully`)
+    logger.log(stdout)
+    logger.log(`✅ Migration ${migrationName} generated successfully`)
   } catch (error) {
-    console.error('❌ Error generating migration:', error)
+    logger.error('❌ Error generating migration:', error)
     process.exit(1)
   }
 }
