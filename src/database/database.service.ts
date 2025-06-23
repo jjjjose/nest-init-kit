@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common'
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import { DataSource, DataSourceOptions } from 'typeorm'
 import { databaseConfig } from 'src/config/database.config'
 import { DEFAULT_CONNECTION_ALIAS, EnvService } from 'src/shared'
@@ -49,9 +44,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     // for (const [name, config] of connectionConfigs.entries()) {
     //   connectionPromises.push(this.connectToDatabase(name, config))
     // }
-    connectionPromises.push(
-      this.connectToDatabase('default', databaseConfig(this.env)),
-    )
+    connectionPromises.push(this.connectToDatabase('default', databaseConfig(this.env)))
 
     await Promise.allSettled(connectionPromises)
   }
@@ -60,18 +53,13 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
    * Connect to a specific database
    * Conectar a una base de datos específica
    */
-  private async connectToDatabase(
-    name: string,
-    config: DataSourceOptions,
-  ): Promise<void> {
+  private async connectToDatabase(name: string, config: DataSourceOptions): Promise<void> {
     try {
       const dataSource = new DataSource(config)
       await dataSource.initialize()
 
       this.dataSources.set(name, dataSource)
-      this.logger.debug(
-        `✅ Connected to database: ${config.database?.toString()}, alias: ${name}`,
-      )
+      this.logger.debug(`✅ Connected to database: ${config.database?.toString()}, alias: ${name}`)
     } catch (error) {
       this.logger.error(`❌ Failed to connect to database: ${name}`, error)
       // In development, continue without this connection
@@ -109,21 +97,15 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
    * Get a specific database connection
    * Obtener una conexión de base de datos específica
    */
-  getDataSource(
-    connectionAlias: string = DEFAULT_CONNECTION_ALIAS,
-  ): DataSource {
+  getDataSource(connectionAlias: string = DEFAULT_CONNECTION_ALIAS): DataSource {
     const dataSource = this.dataSources.get(connectionAlias)
 
     if (!dataSource) {
-      throw new Error(
-        `Database connection '${connectionAlias}' not found or not initialized`,
-      )
+      throw new Error(`Database connection '${connectionAlias}' not found or not initialized`)
     }
 
     if (!dataSource.isInitialized) {
-      throw new Error(
-        `Database connection '${connectionAlias}' is not initialized`,
-      )
+      throw new Error(`Database connection '${connectionAlias}' is not initialized`)
     }
 
     return dataSource
