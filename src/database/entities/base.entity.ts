@@ -15,6 +15,7 @@ export abstract class BaseEntity extends TypeOrmBaseEntity {
    * Creation date / Fecha de creación
    */
   @CreateDateColumn({
+    name: 'created_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     comment: 'Record creation date',
@@ -25,6 +26,7 @@ export abstract class BaseEntity extends TypeOrmBaseEntity {
    * Last update date / Fecha de última actualización
    */
   @UpdateDateColumn({
+    name: 'updated_at',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',

@@ -49,6 +49,7 @@ export class UserEntity extends BaseEntity {
    * User active status / Estado activo del usuario
    */
   @Column({
+    name: 'is_active',
     type: 'boolean',
     default: true,
     comment: 'Indicates if the user is active',
@@ -70,6 +71,7 @@ export class UserEntity extends BaseEntity {
    * Email verification token / Token de verificación de email
    */
   @Column({
+    name: 'email_verification_token',
     type: 'varchar',
     length: 255,
     nullable: true,
@@ -81,6 +83,7 @@ export class UserEntity extends BaseEntity {
    * Email verification date / Fecha de verificación de email
    */
   @Column({
+    name: 'email_verified_at',
     type: 'timestamp',
     nullable: true,
     comment: 'Email verification date',
@@ -91,6 +94,7 @@ export class UserEntity extends BaseEntity {
    * Password reset token / Token de reseteo de contraseña
    */
   @Column({
+    name: 'password_reset_token',
     type: 'varchar',
     length: 255,
     nullable: true,
@@ -102,6 +106,7 @@ export class UserEntity extends BaseEntity {
    * Password reset token expiry / Fecha de expiración del token de reseteo
    */
   @Column({
+    name: 'password_reset_expires_at',
     type: 'timestamp',
     nullable: true,
     comment: 'Password reset token expiry date',
@@ -112,6 +117,7 @@ export class UserEntity extends BaseEntity {
    * Last login date / Fecha de último login
    */
   @Column({
+    name: 'last_login_at',
     type: 'timestamp',
     nullable: true,
     comment: 'User last login date',
@@ -122,6 +128,7 @@ export class UserEntity extends BaseEntity {
    * Login attempts count / Contador de intentos de login
    */
   @Column({
+    name: 'login_attempts',
     type: 'int',
     default: 0,
     comment: 'Failed login attempts count',
@@ -132,6 +139,7 @@ export class UserEntity extends BaseEntity {
    * Account locked until / Cuenta bloqueada hasta
    */
   @Column({
+    name: 'locked_until',
     type: 'timestamp',
     nullable: true,
     comment: 'Account locked until this date',
