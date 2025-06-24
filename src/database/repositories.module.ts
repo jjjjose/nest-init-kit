@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common'
 import { UserRepository } from './repositories/users.repository'
+import { AllowedClientRepository } from './repositories/allowed-clients.repository'
 
 /**
  * Global repositories module / Módulo global de repositorios
@@ -8,7 +9,7 @@ import { UserRepository } from './repositories/users.repository'
 @Global()
 @Module({
   imports: [],
-  providers: [UserRepository],
-  exports: [UserRepository],
+  providers: [UserRepository, AllowedClientRepository],
+  exports: [UserRepository, AllowedClientRepository],
 })
 export class RepositoriesModule {}
