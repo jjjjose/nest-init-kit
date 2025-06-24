@@ -3,6 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter'
 import { EnvService } from './shared'
+import { setupSwagger } from './config/swagger.config'
 
 // Set timezone to UTC / Establecer zona horaria a UTC
 process.env.TZ = 'UTC'
@@ -44,8 +45,16 @@ async function bootstrap() {
   // Apply global exception filter / Aplicar filtro global de excepciones
   app.useGlobalFilters(new AllExceptionsFilter())
 
+  // Set global prefix for all routes / Establecer prefijo global para todas las rutas
+  const globalPrefix = 'api'
+  app.setGlobalPrefix(globalPrefix)
+
   const env = app.get(EnvService)
   const port = env.serverPort ?? 3000
+
+  // Setup Swagger documentation with correct port / Configurar documentación Swagger con puerto correcto
+  setupSwagger(app, globalPrefix, port)
+
   await app.listen(port)
 
   // Log server running URL / Registrar URL del servidor en ejecución
