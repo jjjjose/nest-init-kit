@@ -27,6 +27,15 @@ import { Response, Request } from 'express'
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name)
 
+  // Paths to ignore in logging for common browser/dev tool requests
+  // Rutas a ignorar en el logging para requests comunes del navegador/herramientas dev
+  private readonly ignoredPaths = [
+    '/favicon.ico',
+    '/.well-known/appspecific/com.chrome.devtools.json',
+    '/apple-touch-icon.png',
+    '/robots.txt',
+  ]
+
   /**
    * Main exception handling method / Método principal de manejo de excepciones
    *
@@ -62,11 +71,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exceptionResponse
         : (exceptionResponse as Record<string, unknown>).message || exceptionResponse
 
-    // Log error with request ID / Registrar error con ID de request
-    this.logger.error(
-      `[${requestId}] ${request.method} ${request.url} | Status: ${status}`,
-      finalException.stack || String(exception),
-    )
+    // Log error with request ID, but skip common browser requests
+    // Registrar error con ID de request, pero omitir requests comunes del navegador
+    const shouldLogError = !this.shouldIgnorePath(request.url, status)
+
+    if (shouldLogError) {
+      this.logger.error(
+        `[${requestId}] ${request.method} ${request.url} | Status: ${status}`,
+        finalException.stack || String(exception),
+      )
+    }
 
     response.status(status).json({
       statusCode: status,
@@ -146,6 +160,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: error.message,
       stack: error.stack,
     })
+  }
+
+  /**
+   * Check if a path should be ignored from error logging
+   * Verificar si una ruta debe ser ignorada del logging de errores
+   *
+   * @param path - Request path to check / Ruta de request a verificar
+   * @param status - HTTP status code / Código de estado HTTP
+   * @returns true if should ignore, false otherwise / true si debe ignorar, false en caso contrario
+   */
+  private shouldIgnorePath(path: string, status: number): boolean {
+    // Only ignore 404 errors for specific paths / Solo ignorar errores 404 para rutas específicas
+    if (status !== 404) return false
+
+    return this.ignoredPaths.some((ignoredPath) => path === ignoredPath)
   }
 
   /**
