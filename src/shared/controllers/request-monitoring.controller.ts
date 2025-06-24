@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common'
 import { RequestLogService } from '../services/request-log.service'
+import { ApiJwtAuth } from '../decorators'
 
 /**
  * Request Monitoring Controller
@@ -14,6 +15,8 @@ import { RequestLogService } from '../services/request-log.service'
  * - All requests view (limited) / Vista de todos los requests (limitada)
  * - CSV file search by request ID / Búsqueda en archivos CSV por ID de request
  */
+
+@ApiJwtAuth()
 @Controller('monitoring')
 export class RequestMonitoringController {
   constructor(private readonly requestLogService: RequestLogService) {}

@@ -15,3 +15,6 @@ export * from './inject-datasource.decorator'
 
 // Auth decorator / Decorador de autenticación
 export * from './auth.decorator'
+
+// Swagger decorators / Decoradores de Swagger
+export * from './swagger.decorators'

@@ -2,6 +2,7 @@ import { Controller, Get, Req } from '@nestjs/common'
 import { AppService } from './app.service'
 import { Public } from './shared/decorators/public.decorator'
 import { Request } from 'express'
+import { ApiJwtAuth } from './shared'
 
 @Controller()
 export class AppController {
@@ -21,6 +22,7 @@ export class AppController {
    * Protected route - requires authentication
    * Ruta protegida - requiere autenticación
    */
+  @ApiJwtAuth()
   @Get('protected')
   getProtected(@Req() req: Request): object {
     return {

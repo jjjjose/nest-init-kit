@@ -1,7 +1,8 @@
 import { Controller, Post, Get, Body, HttpStatus, HttpCode, Req } from '@nestjs/common'
+import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger'
 import { AuthService, LoginResponse } from './auth.service'
 import { LoginDto } from './dto/login.dto'
-import { Public } from '../../shared/decorators'
+import { Public, ApiAuthTag, ApiJwtAuth } from '../../shared/decorators'
 import { Request } from 'express'
 
 /**
@@ -11,6 +12,7 @@ import { Request } from 'express'
  * Handles authentication endpoints like login and user profile
  * Maneja endpoints de autenticación como login y perfil de usuario
  */
+@ApiAuthTag()
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -22,6 +24,20 @@ export class AuthController {
    * @param loginDto - Login credentials / Credenciales de login
    * @returns JWT token and user data / Token JWT y datos del usuario
    */
+  @ApiOperation({
+    summary: 'User login / Login de usuario',
+    description: 'Authenticate user with email and password / Autenticar usuario con email y contraseña',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful / Login exitoso',
+    type: Object, // You can create a proper response DTO later / Puedes crear un DTO de respuesta apropiado después
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials / Credenciales inválidas',
+  })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -36,6 +52,19 @@ export class AuthController {
    * @param req - Request object with user data / Objeto de petición con datos del usuario
    * @returns Current user profile / Perfil del usuario actual
    */
+  @ApiOperation({
+    summary: 'Get user profile / Obtener perfil de usuario',
+    description: 'Get current authenticated user profile / Obtener perfil del usuario autenticado actual',
+  })
+  @ApiJwtAuth()
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully / Perfil obtenido exitosamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized / No autorizado',
+  })
   @Get('profile')
   getProfile(@Req() req: Request) {
     return {
