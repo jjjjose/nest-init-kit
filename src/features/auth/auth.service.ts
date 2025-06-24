@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { MyJwtService } from 'src/shared/jwt/my-jwt.service'
 import { JwtPayloadInput, UserRole } from 'src/shared'
+import { UserEntity } from 'src/database/entities'
+import { UserRepository } from 'src/database/repositories/users.repository'
 
 /**
  * User interface for authentication
@@ -37,7 +38,7 @@ export interface LoginResponse {
 export class AuthService {
   constructor(
     private myJwtService: MyJwtService,
-    private configService: ConfigService,
+    private userRepository: UserRepository,
   ) {}
 
   /**
@@ -48,26 +49,12 @@ export class AuthService {
    * @param password - User password / Contraseña del usuario
    * @returns User object or throws exception / Objeto de usuario o lanza excepción
    */
-  validateUser(email: string, password: string): User {
-    // TODO: Replace with actual user validation from database
-    // TODO: Reemplazar con validación real de usuario desde base de datos
+  async validateUser(email: string, password: string): Promise<UserEntity> {
+    const user = await this.userRepository.findByEmailAndPassword(email, password)
 
-    // Mock user for testing - replace with database query
-    // Usuario simulado para pruebas - reemplazar con consulta a base de datos
-    const mockUser: User = {
-      id: 1,
-      email: 'test@example.com',
-      password: 'password123', // In real app, this should be hashed / En app real, esto debería estar hasheado
-      name: 'Test User',
-    }
+    if (!user) throw new UnauthorizedException('Invalid credentials.')
 
-    if (email === mockUser.email && password === mockUser.password) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _pass, ...result } = mockUser
-      return result
-    }
-
-    throw new UnauthorizedException('Invalid credentials.')
+    return user
   }
 
   /**
@@ -78,8 +65,8 @@ export class AuthService {
    * @param password - User password / Contraseña del usuario
    * @returns Login response with token / Respuesta de login con token
    */
-  login(email: string, password: string): LoginResponse {
-    const user = this.validateUser(email, password)
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const user = await this.validateUser(email, password)
 
     const payload: JwtPayloadInput = {
       sub: user.id,

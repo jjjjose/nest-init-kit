@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { DataSource, FindOptionsWhere } from 'typeorm'
+import { DataSource } from 'typeorm'
 import { BaseRepository } from './base.repository'
 import { UserEntity } from '../entities/user.entity'
 import { Role } from '../../shared/enums/role.enum'
@@ -10,7 +10,7 @@ import { InjectDefaultDB } from 'src/shared'
  * Extends base repository with user-specific operations / Extiende el repositorio base con operaciones específicas de usuarios
  */
 @Injectable()
-export class UsersRepository extends BaseRepository<UserEntity> {
+export class UserRepository extends BaseRepository<UserEntity> {
   constructor(
     @InjectDefaultDB()
     private dataSource: DataSource,
@@ -28,6 +28,29 @@ export class UsersRepository extends BaseRepository<UserEntity> {
   }
 
   /**
+   * Find user by email and password / Buscar usuario por email y contraseña
+   * Validates password against stored hash / Valida contraseña contra hash almacenado
+   */
+  async findByEmailAndPassword(email: string, password: string): Promise<UserEntity | null> {
+    const user = await this.createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne()
+
+    if (!user) return null
+
+    const isPasswordValid = await user.verifyPassword(password)
+
+    if (!isPasswordValid) return null
+
+    // Remove password from returned object for security / Remover contraseña del objeto retornado por seguridad
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = user
+
+    return userWithoutPassword as UserEntity
+  }
+
+  /**
    * Find user by email or fail / Buscar usuario por email con validación
    */
   async findByEmailOrFail(email: string): Promise<UserEntity> {
@@ -42,13 +65,13 @@ export class UsersRepository extends BaseRepository<UserEntity> {
    * Check if email exists / Verificar si existe un email
    */
   async emailExists(email: string, excludeId?: number): Promise<boolean> {
-    const where: FindOptionsWhere<UserEntity> = { email }
+    const query = this.createQueryBuilder('user').where('user.email = :email', { email })
 
     if (excludeId) {
-      where.id = excludeId
+      query.andWhere('user.id != :excludeId', { excludeId })
     }
 
-    const count = await this.count({ where })
+    const count = await query.getCount()
     return count > 0
   }
 
@@ -95,12 +118,10 @@ export class UsersRepository extends BaseRepository<UserEntity> {
    * Find user by password reset token / Buscar usuarios por token de reseteo
    */
   async findByPasswordResetToken(token: string): Promise<UserEntity | null> {
-    return await this.findOne({
-      where: {
-        passwordResetToken: token,
-        passwordResetExpiresAt: new Date(),
-      },
-    })
+    return await this.createQueryBuilder('user')
+      .where('user.passwordResetToken = :token', { token })
+      .andWhere('user.passwordResetExpiresAt > :now', { now: new Date() })
+      .getOne()
   }
 
   /**
@@ -123,11 +144,15 @@ export class UsersRepository extends BaseRepository<UserEntity> {
    * Update password / Actualizar contraseña
    */
   async updatePassword(id: number, hashedPassword: string): Promise<UserEntity> {
-    await this.update(id, {
-      password: hashedPassword,
-      passwordResetToken: undefined,
-      passwordResetExpiresAt: undefined,
-    })
+    await this.createQueryBuilder()
+      .update(UserEntity)
+      .set({
+        password: hashedPassword,
+        passwordResetToken: () => 'NULL',
+        passwordResetExpiresAt: () => 'NULL',
+      })
+      .where('id = :id', { id })
+      .execute()
     return await this.findByIdOrFail(id)
   }
 
@@ -135,10 +160,14 @@ export class UsersRepository extends BaseRepository<UserEntity> {
    * Verify email / Verificar email
    */
   async verifyEmail(id: number): Promise<UserEntity> {
-    await this.update(id, {
-      emailVerifiedAt: new Date(),
-      emailVerificationToken: undefined,
-    })
+    await this.createQueryBuilder()
+      .update(UserEntity)
+      .set({
+        emailVerifiedAt: new Date(),
+        emailVerificationToken: () => 'NULL',
+      })
+      .where('id = :id', { id })
+      .execute()
     return await this.findByIdOrFail(id)
   }
 

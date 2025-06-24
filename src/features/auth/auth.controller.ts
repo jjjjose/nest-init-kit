@@ -41,8 +41,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() { email, password }: LoginDto): LoginResponse {
-    return this.authService.login(email, password)
+  async login(@Body() { email, password }: LoginDto): Promise<LoginResponse> {
+    return await this.authService.login(email, password)
   }
 
   /**

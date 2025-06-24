@@ -30,6 +30,7 @@ export class UserEntity extends BaseEntity {
     type: 'varchar',
     length: 255,
     nullable: false,
+    select: false,
     comment: 'User hashed password',
   })
   password: string

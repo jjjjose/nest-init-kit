@@ -28,8 +28,10 @@ export class UserSeeder {
 
     this.logger.log('👥 Creating initial users...')
 
+    const pass = 'password123'
+    const passToBase64 = Buffer.from(pass).toString('base64')
     // Contraseña por defecto hasheada
-    const defaultPassword = await bcrypt.hash('password123', 10)
+    const defaultPassword = await bcrypt.hash(passToBase64, 10)
 
     // Crear super administrador
     const superAdmin = userRepository.create({
