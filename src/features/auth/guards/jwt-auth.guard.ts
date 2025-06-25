@@ -88,8 +88,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       this.logAccess('Protected route - validating authentication', request)
 
-      // 2. Validate client UUID header / Validar header UUID del cliente
-      await this.clientValidator.validateClientUuid(request)
+      // 2. Validate client UUID header only in development mode / Validar header UUID del cliente solo en modo desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        await this.clientValidator.validateClientUuid(request)
+      }
 
       // 3. Validate JWT token / Validar token JWT
       const isValidJWT = await this.validateJwtToken(context)

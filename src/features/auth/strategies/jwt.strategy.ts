@@ -29,7 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @returns User information / Información del usuario
    * @throws UnauthorizedException if user is invalid / Si el usuario es inválido
    */
-  validate(payload: JwtPayload) {
+  validate(payload: JwtPayload): JwtPayload {
     if (!payload.sub || !payload.email) {
       throw new UnauthorizedException('Invalid token payload')
     }
@@ -42,9 +42,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     //   throw new UnauthorizedException('User not found or inactive / Usuario no encontrado o inactivo')
     // }
 
-    return {
-      id: payload.sub,
-      email: payload.email,
-    }
+    return payload
   }
 }

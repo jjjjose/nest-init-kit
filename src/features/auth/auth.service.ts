@@ -6,6 +6,7 @@ import { UserRepository, AllowedClientRepository } from 'src/database/repositori
 import { RegisterClientDto } from './dto/register-client.dto'
 import { RegisterClientResponseDto } from './dto/register-client-response.dto'
 import { LoginResponseDto } from './dto/login-response.dto'
+import { RefreshResponseDto } from './dto/refresh-response.dto'
 
 /**
  * User interface for authentication
@@ -105,7 +106,7 @@ export class AuthService {
     // In a real application, you would fetch the user from database
     // En una aplicación real, buscarías el usuario en la base de datos
     return {
-      id: payload.sub as number,
+      id: payload.sub,
       email: payload.email,
     }
   }
@@ -133,6 +134,34 @@ export class AuthService {
       clientType: newClient.clientType,
       isActive: newClient.isActive,
       message: 'Client registered successfully. Use this UUID in x-client-uuid header for authentication.',
+    }
+  }
+
+  /**
+   * Refresh JWT tokens using a validated refresh token payload
+   * Actualizar tokens JWT usando un payload de token de actualización validado
+   *
+   * @param refreshTokenPayload - Validated refresh token payload / Payload validado del token de actualización
+   * @returns New access token / Nuevo token de acceso
+   */
+  async refreshTokens(id: number): Promise<RefreshResponseDto> {
+    // Get user data from database / Obtener datos del usuario de la base de datos
+    const user = await this.userRepository.findByIdOrFail(id)
+
+    // Generate new access token payload / Generar payload del nuevo token de acceso
+    const newPayload: JwtPayloadInput = {
+      sub: user.id,
+      email: user.email,
+      userId: user.id,
+      roles: [UserRole.USER],
+    }
+
+    // Generate only new access token / Generar solo nuevo token de acceso
+    const accessToken = this.myJwtService.generateAccessTokenFromRefreshToken(newPayload)
+
+    return {
+      ...accessToken,
+      message: 'Access token refreshed successfully',
     }
   }
 }

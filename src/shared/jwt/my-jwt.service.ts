@@ -144,4 +144,16 @@ export class MyJwtService {
     const decodedToken = this.decodeJwtToken(token)
     return decodedToken?.exp ? new Date(decodedToken.exp * 1000).toISOString() : ''
   }
+
+  generateAccessTokenFromRefreshToken(payloadInput: JwtPayloadInput): {
+    accessToken: string
+    accessTokenExpiresAt: string
+  } {
+    const accessToken = this.generateAccessToken(payloadInput),
+      accessTokenExpiresAt = this.calculateTokenExpiration(accessToken)
+    return {
+      accessToken,
+      accessTokenExpiresAt,
+    }
+  }
 }

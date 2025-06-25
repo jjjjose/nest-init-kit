@@ -1,12 +1,14 @@
-import { Controller, Post, Get, Body, HttpStatus, HttpCode, Req } from '@nestjs/common'
+import { Controller, Post, Get, Body, HttpStatus, HttpCode, Req, UnauthorizedException } from '@nestjs/common'
 import { ApiOperation, ApiResponse, ApiBody, ApiCreatedResponse } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
 import { RegisterClientDto } from './dto/register-client.dto'
 import { RegisterClientResponseDto } from './dto/register-client-response.dto'
 import { LoginResponseDto } from './dto/login-response.dto'
+import { RefreshResponseDto } from './dto/refresh-response.dto'
 import { Public, ApiAuthTag, ApiJwtAuth } from '../../shared/decorators'
 import { Request } from 'express'
+import { JwtPayload } from 'src/shared'
 
 /**
  * Authentication Controller
@@ -28,18 +30,18 @@ export class AuthController {
    * @returns JWT token and user data / Token JWT y datos del usuario
    */
   @ApiOperation({
-    summary: 'User login / Login de usuario',
-    description: 'Authenticate user with email and password / Autenticar usuario con email y contraseña',
+    summary: 'User login',
+    description: 'Authenticate user with email and password',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
     status: 200,
-    description: 'Login successful / Login exitoso',
+    description: 'Login successful',
     type: LoginResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Invalid credentials / Credenciales inválidas',
+    description: 'Invalid credentials',
   })
   @Public()
   @Post('login')
@@ -56,22 +58,22 @@ export class AuthController {
    * @returns Current user profile / Perfil del usuario actual
    */
   @ApiOperation({
-    summary: 'Get user profile / Obtener perfil de usuario',
-    description: 'Get current authenticated user profile / Obtener perfil del usuario autenticado actual',
+    summary: 'Get user profile',
+    description: 'Get current authenticated user profile',
   })
   @ApiJwtAuth()
   @ApiResponse({
     status: 200,
-    description: 'Profile retrieved successfully / Perfil obtenido exitosamente',
+    description: 'Profile retrieved successfully',
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized / No autorizado',
+    description: 'Unauthorized',
   })
   @Get('profile')
   getProfile(@Req() req: Request) {
     return {
-      message: 'User profile retrieved successfully / Perfil de usuario obtenido exitosamente',
+      message: 'User profile retrieved successfully',
       user: req.user,
     }
   }
@@ -86,7 +88,7 @@ export class AuthController {
   @Get('test')
   testAuth(@Req() req: Request) {
     return {
-      message: 'Authentication is working / La autenticación está funcionando',
+      message: 'Authentication is working',
       user: req.user,
       timestamp: new Date().toISOString(),
     }
@@ -101,13 +103,12 @@ export class AuthController {
    * @returns Client UUID and information / UUID del cliente e información
    */
   @ApiOperation({
-    summary: 'Register new client / Registrar nuevo cliente',
-    description:
-      'Register a new client and receive UUID for authentication / Registrar un nuevo cliente y recibir UUID para autenticación',
+    summary: 'Register new client',
+    description: 'Register a new client and receive UUID for authentication',
   })
   @ApiBody({ type: RegisterClientDto })
   @ApiCreatedResponse({
-    description: 'Client registered successfully / Cliente registrado exitosamente',
+    description: 'Client registered successfully',
     type: RegisterClientResponseDto,
   })
   @Public()
@@ -129,8 +130,36 @@ export class AuthController {
   @Get('public')
   publicEndpoint() {
     return {
-      message: 'This is a public endpoint / Este es un endpoint público',
+      message: 'This is a public endpoint',
       timestamp: new Date().toISOString(),
     }
+  }
+
+  /**
+   * Refresh JWT tokens using a valid refresh token
+   * Actualizar tokens JWT usando un token de actualización válido
+   *
+   * @param req - Request object with refresh token / Objeto de petición con token de actualización
+   * @returns New token pair / Nuevo par de tokens
+   */
+  @ApiOperation({
+    summary: 'Refresh JWT tokens',
+    description: 'Generate new access and refresh tokens using a valid refresh token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens refreshed successfully',
+    type: RefreshResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token',
+  })
+  @ApiJwtAuth()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Req() req: Request & { user: JwtPayload }): Promise<RefreshResponseDto> {
+    if (req.user.tokenType !== 'refresh') throw new UnauthorizedException('Invalid token type')
+    return await this.authService.refreshTokens(req.user.sub)
   }
 }
