@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm'
 import { BaseRepository } from './base.repository'
 import { UserEntity } from '../entities/user.entity'
 import { Role } from '../../shared/enums/role.enum'
-import { InjectDefaultDB } from 'src/shared'
+import { InjectDefaultDB } from 'src/shared/decorators'
 
 /**
  * Users repository / Repositorio de usuarios

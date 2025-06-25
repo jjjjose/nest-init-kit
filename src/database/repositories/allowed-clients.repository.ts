@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { BaseRepository } from './base.repository'
 import { AllowedClientEntity } from '../entities'
-import { InjectDefaultDB } from 'src/shared'
+import { InjectDefaultDB } from 'src/shared/decorators'
 
 /**
  * Allowed Clients Repository / Repositorio de Clientes Permitidos
