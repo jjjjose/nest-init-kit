@@ -1,10 +1,38 @@
 {
   "name": "nest-init-kit",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
-  "private": true,
-  "license": "UNLICENSED",
+  "description": "A production-ready NestJS boilerplate with JWT authentication, TypeORM database integration, comprehensive testing, and advanced enterprise features.",
+  "author": {
+    "name": "Jose Ignacio",
+    "email": "jjjjoseignacio@gmail.com",
+    "url": "https://github.com/jjjjose"
+  },
+  "private": false,
+  "license": "MIT",
+  "keywords": [
+    "nestjs",
+    "boilerplate",
+    "typescript",
+    "jwt",
+    "authentication",
+    "typeorm",
+    "postgresql",
+    "api",
+    "rest",
+    "swagger",
+    "rbac",
+    "roles",
+    "enterprise",
+    "production-ready"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jjjjose/nest-init-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jjjjose/nest-init-kit/issues"
+  },
+  "homepage": "https://github.com/jjjjose/nest-init-kit#readme",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
