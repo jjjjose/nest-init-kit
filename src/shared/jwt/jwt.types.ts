@@ -15,7 +15,7 @@ export enum UserRole {
  */
 export interface JwtPayloadInput {
   /** User ID / ID del usuario */
-  userId: number | string
+  userId: number
   /** User email / Email del usuario */
   email: string
   /** Username / Nombre de usuario */
@@ -35,7 +35,7 @@ export interface JwtPayloadInput {
   /** Audience / Audiencia */
   aud?: string
   /** Subject (user ID) - JWT standard / Sujeto (ID usuario) - estándar JWT */
-  sub: number | string
+  sub: number
 }
 
 /**
