@@ -44,7 +44,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     // for (const [name, config] of connectionConfigs.entries()) {
     //   connectionPromises.push(this.connectToDatabase(name, config))
     // }
-    connectionPromises.push(this.connectToDatabase('default', databaseConfig(this.env)))
+    const defaultConnection = this.dataSources.get(DEFAULT_CONNECTION_ALIAS)
+    if (!defaultConnection) {
+      connectionPromises.push(this.connectToDatabase(DEFAULT_CONNECTION_ALIAS, databaseConfig(this.env)))
+    }
 
     await Promise.allSettled(connectionPromises)
   }
@@ -97,11 +100,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
    * Get a specific database connection
    * Obtener una conexión de base de datos específica
    */
-  getDataSource(connectionAlias: string = DEFAULT_CONNECTION_ALIAS): DataSource {
-    const dataSource = this.dataSources.get(connectionAlias)
+  async getDataSource(connectionAlias: string = DEFAULT_CONNECTION_ALIAS): Promise<DataSource> {
+    let dataSource = this.dataSources.get(connectionAlias)
 
     if (!dataSource) {
-      throw new Error(`Database connection '${connectionAlias}' not found or not initialized`)
+      await this.connectToAllDatabases()
+      dataSource = this.dataSources.get(connectionAlias)
+
+      if (!dataSource) {
+        throw new Error(`Database connection '${connectionAlias}' not found or not initialized`)
+      }
     }
 
     if (!dataSource.isInitialized) {
