@@ -1,18 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import { EnvService } from 'src/shared'
-
-/**
- * JWT payload interface
- * Interfaz del payload JWT
- */
-export interface JwtPayload {
-  sub: number
-  email: string
-  iat?: number
-  exp?: number
-}
+import { EnvService, JwtPayload } from 'src/shared'
 
 /**
  * JWT Strategy for Passport authentication

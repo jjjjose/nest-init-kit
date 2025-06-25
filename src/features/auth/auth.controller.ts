@@ -1,7 +1,10 @@
 import { Controller, Post, Get, Body, HttpStatus, HttpCode, Req } from '@nestjs/common'
-import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger'
-import { AuthService, LoginResponse } from './auth.service'
+import { ApiOperation, ApiResponse, ApiBody, ApiCreatedResponse } from '@nestjs/swagger'
+import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
+import { RegisterClientDto } from './dto/register-client.dto'
+import { RegisterClientResponseDto } from './dto/register-client-response.dto'
+import { LoginResponseDto } from './dto/login-response.dto'
 import { Public, ApiAuthTag, ApiJwtAuth } from '../../shared/decorators'
 import { Request } from 'express'
 
@@ -32,7 +35,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Login successful / Login exitoso',
-    type: Object, // You can create a proper response DTO later / Puedes crear un DTO de respuesta apropiado después
+    type: LoginResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -41,7 +44,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() { email, password }: LoginDto): Promise<LoginResponse> {
+  async login(@Body() { email, password }: LoginDto): Promise<LoginResponseDto> {
     return await this.authService.login(email, password)
   }
 
@@ -79,6 +82,7 @@ export class AuthController {
    *
    * @returns Success message / Mensaje de éxito
    */
+  @Public()
   @Get('test')
   testAuth(@Req() req: Request) {
     return {
@@ -86,6 +90,33 @@ export class AuthController {
       user: req.user,
       timestamp: new Date().toISOString(),
     }
+  }
+
+  /**
+   * Register new client and get UUID
+   * Registrar nuevo cliente y obtener UUID
+   *
+   * @param registerClientDto - Client registration data / Datos de registro del cliente
+   * @param clientIp - Client IP address / Dirección IP del cliente
+   * @returns Client UUID and information / UUID del cliente e información
+   */
+  @ApiOperation({
+    summary: 'Register new client / Registrar nuevo cliente',
+    description:
+      'Register a new client and receive UUID for authentication / Registrar un nuevo cliente y recibir UUID para autenticación',
+  })
+  @ApiBody({ type: RegisterClientDto })
+  @ApiCreatedResponse({
+    description: 'Client registered successfully / Cliente registrado exitosamente',
+    type: RegisterClientResponseDto,
+  })
+  @Public()
+  @Post('register-client')
+  async registerClient(@Body() registerClientDto: RegisterClientDto, @Req() req: Request) {
+    // Extract client IP from request / Extraer IP del cliente desde el request
+    const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown'
+
+    return await this.authService.registerClient(registerClientDto, clientIp)
   }
 
   /**

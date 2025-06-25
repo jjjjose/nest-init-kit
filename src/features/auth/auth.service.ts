@@ -2,7 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { MyJwtService } from 'src/shared/jwt/my-jwt.service'
 import { JwtPayloadInput, UserRole } from 'src/shared'
 import { UserEntity } from 'src/database/entities'
-import { UserRepository } from 'src/database/repositories/users.repository'
+import { UserRepository, AllowedClientRepository } from 'src/database/repositories'
+import { RegisterClientDto } from './dto/register-client.dto'
+import { RegisterClientResponseDto } from './dto/register-client-response.dto'
+import { LoginResponseDto } from './dto/login-response.dto'
 
 /**
  * User interface for authentication
@@ -39,6 +42,7 @@ export class AuthService {
   constructor(
     private myJwtService: MyJwtService,
     private userRepository: UserRepository,
+    private allowedClientRepository: AllowedClientRepository,
   ) {}
 
   /**
@@ -65,7 +69,7 @@ export class AuthService {
    * @param password - User password / Contraseña del usuario
    * @returns Login response with token / Respuesta de login con token
    */
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<LoginResponseDto> {
     const user = await this.validateUser(email, password)
 
     const payload: JwtPayloadInput = {
@@ -103,6 +107,32 @@ export class AuthService {
     return {
       id: payload.sub as number,
       email: payload.email,
+    }
+  }
+
+  /**
+   * Register new client and generate UUID
+   * Registrar nuevo cliente y generar UUID
+   *
+   * @param registerClientDto - Client registration data / Datos de registro del cliente
+   * @param clientIp - Client IP address / Dirección IP del cliente
+   * @returns Registered client info / Información del cliente registrado
+   */
+  async registerClient(registerClientDto: RegisterClientDto, clientIp?: string): Promise<RegisterClientResponseDto> {
+    const clientData = {
+      clientType: registerClientDto.clientType,
+      clientDescription: registerClientDto.clientDescription,
+      ip: clientIp,
+      isActive: true,
+    }
+
+    const newClient = await this.allowedClientRepository.createAndSave(clientData)
+
+    return {
+      clientUuid: newClient.clientUuid,
+      clientType: newClient.clientType,
+      isActive: newClient.isActive,
+      message: 'Client registered successfully. Use this UUID in x-client-uuid header for authentication.',
     }
   }
 }
