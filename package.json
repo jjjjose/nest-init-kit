@@ -1,6 +1,6 @@
 {
   "name": "nest-init-kit",
-  "version": "0.0.1",
+  "version": "0.8.0",
   "description": "A production-ready NestJS boilerplate with JWT authentication, TypeORM database integration, comprehensive testing, and advanced enterprise features.",
   "author": {
     "name": "Jose Ignacio",

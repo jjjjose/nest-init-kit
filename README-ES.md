@@ -1,6 +1,7 @@
 # Nest Init Kit 🚀
 
-> 🌐 **Language / Idioma**: [English](README.md) | [Español](README-ES.md)
+> 🌐 **Language / Idioma**: [English](README.md) | [Español](README-ES.md)  
+> 📋 **Información de Versión**: [Changelog y Notas de Lanzamiento](CHANGELOG-ES.md)
 
 Un boilerplate de NestJS listo para producción con autenticación JWT, integración de base de datos TypeORM, pruebas comprensivas y características empresariales avanzadas.
 
