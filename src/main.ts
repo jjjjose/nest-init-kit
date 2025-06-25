@@ -52,8 +52,8 @@ async function bootstrap() {
   const env = app.get(EnvService)
   const port = env.serverPort ?? 3000
 
-  // Setup Swagger documentation with correct port / Configurar documentación Swagger con puerto correcto
-  setupSwagger(app, globalPrefix, port)
+  // Setup Swagger documentation only in development mode / Configurar documentación Swagger solo en modo desarrollo
+  if (env.isDevelopment) setupSwagger(app, globalPrefix, port)
 
   await app.listen(port)
 
