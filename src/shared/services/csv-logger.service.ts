@@ -8,14 +8,33 @@ import type { RequestLog } from './request-log.service'
  * CSV Logger Service
  * Servicio de Logger CSV
  *
- * Handles CSV file persistence for request logs
- * Maneja la persistencia en archivos CSV para logs de requests
+ * ARCHITECTURE ROLE / ROL EN LA ARQUITECTURA:
+ * File persistence layer for request logs with dual CSV structure
+ * Capa de persistencia de archivos para logs de requests con estructura CSV dual
  *
- * Features / Características:
- * - Separate files for success and error logs / Archivos separados para logs exitosos y de error
- * - Daily log rotation / Rotación diaria de logs
+ * INTEGRATION / INTEGRACIÓN:
+ * - Used by: RequestLogService for final persistence / Usado por: RequestLogService para persistencia final
+ * - File Structure: Separate success/error directories with daily rotation / Estructura de Archivos: Directorios separados éxito/error con rotación diaria
+ * - Search Capability: Cross-file request ID lookup / Capacidad de Búsqueda: Búsqueda de ID de request entre archivos
+ *
+ * FILE ORGANIZATION / ORGANIZACIÓN DE ARCHIVOS:
+ * ```
+ * logs/
+ * ├── success/success_YYYY-MM-DD.csv (requestId, method, url, statusCode, duration, ...)
+ * └── errors/errors_YYYY-MM-DD.csv   (requestId, method, url, statusCode, errorMessage, stack, ...)
+ * ```
+ *
+ * FEATURES / CARACTERÍSTICAS:
+ * - Daily log file rotation / Rotación diaria de archivos de log
  * - Automatic directory creation / Creación automática de directorios
- * - CSV format for easy analysis / Formato CSV para análisis fácil
+ * - CSV format with proper escaping / Formato CSV con escapado apropiado
+ * - Configurable body saving based on LOGGING_CONFIG / Guardado configurable de cuerpo basado en LOGGING_CONFIG
+ * - Historical file parsing for memory loading / Análisis de archivos históricos para carga en memoria
+ * - Cross-file search capabilities / Capacidades de búsqueda entre archivos
+ *
+ * CSV STRUCTURE DIFFERENCES / DIFERENCIAS EN ESTRUCTURA CSV:
+ * - Success files: Include responseBody and requestBody / Archivos exitosos: Incluyen responseBody y requestBody
+ * - Error files: Include errorMessage, errorStack, requestHeaders / Archivos error: Incluyen errorMessage, errorStack, requestHeaders
  */
 @Injectable()
 export class CsvLoggerService {
@@ -44,6 +63,7 @@ export class CsvLoggerService {
     ip: string
     userAgent: string
     responseSize?: number
+    requestBody?: unknown
     responseBody?: unknown
   }): void {
     try {
@@ -53,7 +73,8 @@ export class CsvLoggerService {
 
       // Create header if file doesn't exist / Crear header si el archivo no existe
       if (!existsSync(filepath)) {
-        const header = 'requestId,timestamp,method,url,statusCode,duration,ip,userAgent,responseSize,responseBody\n'
+        const header =
+          'requestId,timestamp,method,url,statusCode,duration,ip,userAgent,responseSize,requestBody,responseBody\n'
         writeFileSync(filepath, header, 'utf8')
       }
 
@@ -69,6 +90,7 @@ export class CsvLoggerService {
           `"${data.ip}"`,
           `"${this.sanitizeForCsv(data.userAgent)}"`,
           data.responseSize || 0,
+          `"${this.sanitizeForCsv(JSON.stringify(data.requestBody || {}))}"`,
           `"${this.sanitizeForCsv(JSON.stringify(data.responseBody || {}))}"`,
         ].join(',') + '\n'
 

@@ -42,8 +42,10 @@ async function bootstrap() {
     }),
   )
 
-  // Apply global exception filter / Aplicar filtro global de excepciones
-  app.useGlobalFilters(new AllExceptionsFilter())
+  // Apply global exception filter with dependency injection / Aplicar filtro global de excepciones con inyección de dependencias
+  const { RequestLogService } = await import('./shared/services/request-log.service')
+  const requestLogService = app.get(RequestLogService)
+  app.useGlobalFilters(new AllExceptionsFilter(requestLogService))
 
   // Set global prefix for all routes / Establecer prefijo global para todas las rutas
   const globalPrefix = 'api'

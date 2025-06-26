@@ -44,22 +44,33 @@ export interface RequestLog extends RequestLogData, Partial<RequestLogUpdate> {}
  * Request Log Service
  * Servicio de Log de Requests
  *
- * Manages request logging with in-memory storage, CSV persistence and search capabilities
- * Maneja el logging de requests con almacenamiento en memoria, persistencia CSV y capacidades de búsqueda
+ * ARCHITECTURE / ARQUITECTURA:
+ * Central logging orchestrator that manages request lifecycle tracking
+ * Orquestador central de logging que maneja el seguimiento del ciclo de vida de requests
  *
- * Features / Características:
- * - In-memory request tracking / Seguimiento de requests en memoria
- * - CSV file persistence / Persistencia en archivos CSV
- * - Request completion tracking / Seguimiento de completación de requests
- * - Request search by ID / Búsqueda de requests por ID
- * - Request cleanup for memory management / Limpieza de requests para manejo de memoria
+ * COMPONENTS INTEGRATION / INTEGRACIÓN DE COMPONENTES:
+ * - Used by: Interceptor (99% of requests) + Filter (404 fallbacks)
+ * - Usado por: Interceptor (99% de requests) + Filter (respaldo 404)
+ * - Uses: CsvLoggerService for file persistence / Usa: CsvLoggerService para persistencia de archivos
+ * - Monitoring: RequestMonitoringController for API access / Monitoreo: RequestMonitoringController para acceso API
+ *
+ * FEATURES / CARACTERÍSTICAS:
+ * - In-memory request tracking with automatic cleanup / Seguimiento de requests en memoria con limpieza automática
+ * - Dual CSV persistence (success/error files) / Persistencia dual CSV (archivos éxito/error)
+ * - Historical data loading on startup / Carga de datos históricos al arrancar
+ * - Memory management with configurable limits / Gestión de memoria con límites configurables
+ * - Comprehensive search capabilities / Capacidades de búsqueda comprehensivas
+ *
+ * MEMORY MANAGEMENT / GESTIÓN DE MEMORIA:
+ * - Automatic cleanup at 5000+ logs / Limpieza automática con 5000+ logs
+ * - LRU-style removal (keeps newest) / Eliminación estilo LRU (mantiene los más nuevos)
+ * - Historical loading from CSV files / Carga histórica desde archivos CSV
  */
 @Injectable()
 export class RequestLogService {
   private readonly logger = new Logger(RequestLogService.name)
   private readonly requestLogs = new Map<string, RequestLog>()
   private readonly maxStoredLogs = 5000 // Maximum number of request logs stored in memory / Número máximo de logs de requests almacenados en memoria
-  private isLoaded = false // Flag to track if historical data has been loaded / Flag para rastrear si los datos históricos han sido cargados
 
   constructor(private readonly csvLogger: CsvLoggerService) {
     // Load historical logs on startup / Cargar logs históricos al arrancar
@@ -132,6 +143,7 @@ export class RequestLogService {
         ip: existingLog.ip,
         userAgent: existingLog.userAgent,
         responseSize: updateData.responseSize,
+        requestBody: existingLog.body,
         responseBody: updateData.responseBody,
       })
     } else {
@@ -473,7 +485,6 @@ export class RequestLogService {
       }
 
       const duration = Date.now() - startTime
-      this.isLoaded = true
 
       this.logger.log(
         `Historical logs loaded successfully: ${loadedCount} logs from ${allFiles.length} files in ${duration}ms`,

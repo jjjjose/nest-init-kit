@@ -7,4 +7,5 @@
  */
 
 export * from './app.constants'
+export * from './logging.constants'
 export * from './swagger.constants'

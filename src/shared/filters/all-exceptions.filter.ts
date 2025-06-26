@@ -10,22 +10,42 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import { Response, Request } from 'express'
+import { randomUUID } from 'crypto'
+import { RequestLogService } from '../services/request-log.service'
+import { LOGGING_CONFIG } from '../constants'
 
 /**
- * Global exception filter that catches all unhandled exceptions
- * Filtro global de excepciones que captura todas las excepciones no manejadas
+ * Global Exception Filter
+ * Filtro Global de Excepciones
  *
- * Features / Características:
- * - Standardized error responses / Respuestas de error estandarizadas
- * - Database error detection / Detección de errores de base de datos
- * - Development/Production mode handling / Manejo de modo desarrollo/producción
- * - Comprehensive logging / Logging completo
+ * ARCHITECTURE ROLE / ROL EN LA ARQUITECTURA:
+ * Fallback logging component for requests not handled by interceptor (mainly 404s and routing errors)
+ * Componente de logging de respaldo para requests no manejados por interceptor (principalmente 404s y errores de routing)
  *
- * @decorator @Catch() - Catches all exceptions / Captura todas las excepciones
+ * EXECUTION FLOW / FLUJO DE EJECUCIÓN:
+ * Middleware → Interceptor → Controller → [Exception occurs] → Filter (this)
+ * Middleware → Interceptor → Controller → [Excepción ocurre] → Filter (este)
+ *
+ * RESPONSIBILITIES / RESPONSABILIDADES:
+ * - Handle routing errors (404 Not Found) / Manejar errores de routing (404 No Encontrado)
+ * - Catch unhandled exceptions not processed by interceptor / Capturar excepciones no manejadas no procesadas por interceptor
+ * - Standardize error response format / Estandarizar formato de respuesta de error
+ * - Database error categorization / Categorización de errores de base de datos
+ * - Production vs Development error exposure / Exposición de errores en Producción vs Desarrollo
+ *
+ * DUPLICATE PREVENTION / PREVENCIÓN DE DUPLICADOS:
+ * Checks 'wasHandledByInterceptor' flag to prevent logging requests already processed
+ * Verifica flag 'wasHandledByInterceptor' para prevenir logging de requests ya procesados
+ *
+ * IGNORED PATHS / RUTAS IGNORADAS:
+ * Skips logging for common browser requests (favicon.ico, robots.txt, etc.)
+ * Omite logging para requests comunes del navegador (favicon.ico, robots.txt, etc.)
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name)
+
+  constructor(private readonly requestLogService: RequestLogService) {}
 
   // Paths to ignore in logging for common browser/dev tool requests
   // Rutas a ignorar en el logging para requests comunes del navegador/herramientas dev
@@ -58,8 +78,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>()
     const isProd = process.env.NODE_ENV === 'production'
 
-    // Get request ID if available / Obtener ID de request si está disponible
-    const requestId = (request as unknown as { requestId?: string }).requestId || 'unknown'
+    // Get request ID if available, generate one if not / Obtener ID de request si está disponible, generar uno si no
+    let requestId =
+      (request as unknown as { requestId?: string }).requestId ||
+      (request.headers['x-request-id'] as string) ||
+      (request.headers['X-Request-ID'] as string)
+
+    // If no requestId found, generate a new one / Si no se encuentra requestId, generar uno nuevo
+    if (!requestId) {
+      requestId = randomUUID()
+      // Store it in the request for consistency / Almacenarlo en el request para consistencia
+      ;(request as unknown as { requestId: string }).requestId = requestId
+    }
 
     const finalException = this.processException(exception, isProd)
     const status = finalException.getStatus()
@@ -80,6 +110,70 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `[${requestId}] ${request.method} ${request.url} | Status: ${status}`,
         finalException.stack || String(exception),
       )
+    }
+
+    // Add request ID to response headers / Agregar ID de request a headers de respuesta
+    response.setHeader('X-Request-ID', requestId)
+
+    // Check if interceptor handled the logging / Verificar si el interceptor manejó el logging
+    const wasHandledByInterceptor = (request as unknown as { wasHandledByInterceptor?: boolean })
+      .wasHandledByInterceptor
+
+    // Handle ALL errors not captured by interceptor (401, 403, 404, 500, etc.)
+    // Manejar TODOS los errores no capturados por interceptor (401, 403, 404, 500, etc.)
+    if (!wasHandledByInterceptor && shouldLogError) {
+      try {
+        // Log any error that was not captured by interceptor
+        // Registrar cualquier error que no fue capturado por interceptor
+        this.logger.error(
+          `[${requestId}] ✖ ${request.method} ${request.url} | Status: ${status} | Error not handled by interceptor`,
+        )
+
+        // FALLBACK LOGGING - For ALL errors not handled by interceptor (401, 403, 404, 500, etc.)
+        // LOGGING DE RESPALDO - Para TODOS los errores no manejados por interceptor (401, 403, 404, 500, etc.)
+        this.requestLogService.logRequest({
+          requestId,
+          method: request.method,
+          url: request.url,
+          userAgent: request.get('user-agent') || 'unknown',
+          ip: request.ip || 'unknown',
+          timestamp: new Date(),
+          headers: this.sanitizeHeaders(request.headers as Record<string, unknown>),
+          body: LOGGING_CONFIG.SAVE_ERROR_REQUEST_BODY ? this.sanitizeBody(request.body) : undefined,
+        })
+
+        // Prepare response body based on configuration / Preparar response body basado en configuración
+        const responseBodyToSave = LOGGING_CONFIG.SAVE_ERROR_RESPONSE_BODY
+          ? {
+              statusCode: status,
+              timestamp: new Date().toISOString(),
+              path: request.url,
+              error: errorMessage,
+              requestId,
+            }
+          : undefined
+
+        // Update with error information / Actualizar con información de error
+        this.requestLogService.updateRequestLog(requestId, {
+          statusCode: status,
+          duration: 0, // We don't have duration info in filter / No tenemos info de duración en filtro
+          success: false,
+          responseBody: responseBodyToSave,
+          error: {
+            message: typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage),
+            stack: finalException.stack,
+            name: finalException.name,
+          },
+          completedAt: new Date(),
+        })
+      } catch (logError) {
+        // Ignore logging errors to avoid infinite loops / Ignorar errores de logging para evitar bucles infinitos
+        this.logger.warn(`Failed to log error ${requestId}: ${String(logError)}`)
+      }
+    } else if (wasHandledByInterceptor) {
+      // Log for debugging: interceptor already handled it
+      // Log para debugging: interceptor ya lo manejó
+      this.logger.debug(`Request ${requestId} handled by interceptor, filter only provides response`)
     }
 
     response.status(status).json({
@@ -199,5 +293,49 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } catch {
       return String(error)
     }
+  }
+
+  /**
+   * Sanitize headers to remove sensitive information
+   * Sanear headers para remover información sensible
+   *
+   * @param headers - Request headers / Headers del request
+   * @returns Sanitized headers / Headers saneados
+   */
+  private sanitizeHeaders(headers: Record<string, unknown>): Record<string, unknown> {
+    const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key', 'x-auth-token']
+    const sanitized = { ...headers }
+
+    sensitiveHeaders.forEach((header) => {
+      if (sanitized[header]) {
+        sanitized[header] = '[REDACTED]'
+      }
+    })
+
+    return sanitized
+  }
+
+  /**
+   * Sanitize request body to remove sensitive information
+   * Sanear cuerpo del request para remover información sensible
+   *
+   * @param body - Request body / Cuerpo del request
+   * @returns Sanitized body / Cuerpo saneado
+   */
+  private sanitizeBody(body: unknown): unknown {
+    if (!body || typeof body !== 'object') {
+      return body
+    }
+
+    const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth']
+    const sanitized = { ...body } as Record<string, unknown>
+
+    sensitiveFields.forEach((field) => {
+      if (sanitized[field]) {
+        sanitized[field] = '[REDACTED]'
+      }
+    })
+
+    return sanitized
   }
 }
